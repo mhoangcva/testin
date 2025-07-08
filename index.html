@@ -5,8 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>World Clock</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Inline fallback styles in case CSS doesn't load */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10000;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px;
+            font-size: 18px;
+        }
+    </style>
 </head>
 <body>
+    <div id="loadingMessage" class="loading">🌍 Loading World Clock...</div>
+    <div id="debugInfo" class="debug-info" style="display: none;">
+        <div>JavaScript Status: <span id="jsStatus">Loading...</span></div>
+        <div>Files loaded from: <span id="protocol"></span></div>
+    </div>
+    
     <div class="container">
         <header>
             <h1>🌍 World Clock</h1>
@@ -76,6 +101,26 @@
         </div>
     </div>
     
+    <script>
+        // Debug information
+        document.getElementById('protocol').textContent = window.location.protocol;
+        if (window.location.protocol === 'file:') {
+            document.getElementById('debugInfo').style.display = 'block';
+            document.getElementById('jsStatus').textContent = 'Running from file:// - may have issues';
+        }
+        
+        // Hide loading message once DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('jsStatus').textContent = 'DOM Ready';
+        });
+        
+        // Error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.message, 'at', e.filename, ':', e.lineno);
+            document.getElementById('jsStatus').textContent = 'JavaScript Error - check console';
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
