@@ -41,7 +41,7 @@ class WorldClock {
     
     setupEventListeners() {
         // Map region clicks
-        document.querySelectorAll('.region').forEach(region => {
+        document.querySelectorAll('.clickable-region').forEach(region => {
             region.addEventListener('click', (e) => {
                 const timezone = e.target.dataset.timezone;
                 const regionName = e.target.dataset.region;
@@ -111,13 +111,12 @@ class WorldClock {
         mapClock.dataset.timezone = timezone;
         mapClock.dataset.name = name;
         
-        // Position the clock near the region
-        const bbox = region.getBBox();
-        const centerX = bbox.x + bbox.width / 2;
-        const centerY = bbox.y + bbox.height / 2;
+        // Position the clock near the circular region
+        const cx = parseFloat(region.getAttribute('cx'));
+        const cy = parseFloat(region.getAttribute('cy'));
         
-        mapClock.style.left = `${(centerX / 1000) * 100}%`;
-        mapClock.style.top = `${(centerY / 500) * 100}%`;
+        mapClock.style.left = `${(cx / 1000) * 100}%`;
+        mapClock.style.top = `${((cy - 30) / 500) * 100}%`; // Position above the circle
         
         timezoneClocks.appendChild(mapClock);
         this.updateMapClock(mapClock, timezone, name);
@@ -192,7 +191,7 @@ class WorldClock {
         this.activeTimezones.clear();
         document.getElementById('clockGrid').innerHTML = '';
         document.getElementById('timezoneClocks').innerHTML = '';
-        document.querySelectorAll('.region').forEach(region => {
+        document.querySelectorAll('.clickable-region').forEach(region => {
             region.classList.remove('active');
         });
     }

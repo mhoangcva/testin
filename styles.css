@@ -52,23 +52,46 @@ header p {
     max-height: 400px;
 }
 
-.region {
-    fill: #4a90e2;
+.ocean {
+    fill: #2c5f84;
+}
+
+.continent {
+    fill: #4a7c59;
+    stroke: #2c5f84;
+    stroke-width: 1;
+}
+
+.clickable-region {
+    fill: #6b9975;
     stroke: #ffffff;
     stroke-width: 2;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.region:hover {
+.clickable-region:hover {
     fill: #ffd700;
-    transform: scale(1.05);
+    transform: scale(1.2);
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
 }
 
-.region.active {
+.clickable-region.active {
     fill: #ff6b6b;
     animation: pulse 2s infinite;
+}
+
+.region-label {
+    fill: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+}
+
+.region {
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 @keyframes pulse {
