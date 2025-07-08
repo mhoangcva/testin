@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Clock 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #ffd700, #ffeb3b, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .globe-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 30px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        #globe-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #globe-canvas:active {
+            cursor: grabbing;
+        }
+
+        .globe-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 5;
+        }
+
+        .globe-info p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .city-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ffd700 0%, #ff6b6b 100%);
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        .city-marker:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        .city-marker.active {
+            background: radial-gradient(circle, #ff6b6b 0%, #e74c3c 100%);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { 
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(255, 215, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+            }
+        }
+
+        .clock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .clock-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clock-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4, #45b7d1);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .clock-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .clock-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .clock-card .time {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: linear-gradient(45deg, #ffffff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .clock-card .date {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .clock-card .timezone {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 107, 107, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 107, 107, 1);
+            transform: scale(1.1);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .timezone-selector {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.95), rgba(30, 30, 30, 0.95));
+            border-radius: 25px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            animation: fadeInScale 0.4s ease;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .timezone-selector h3 {
+            margin-bottom: 30px;
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .timezone-selector select {
+            width: 100%;
+            padding: 18px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(30, 30, 30, 0.9);
+            color: #ffffff;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 20px;
+            padding-right: 50px;
+        }
+
+        .timezone-selector select:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+            background: rgba(40, 40, 40, 0.95);
+        }
+
+        .timezone-selector select option {
+            background: rgba(30, 30, 30, 0.98);
+            color: #ffffff;
+            padding: 15px;
+            font-size: 1rem;
+            border: none;
+            line-height: 1.6;
+        }
+
+        .timezone-selector .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            margin: 50px;
+            font-size: 1.2rem;
+            color: #ffd700;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            header h1 { font-size: 2.2rem; }
+            .globe-container { height: 400px; }
+            .clock-grid { grid-template-columns: 1fr; }
+            .btn { padding: 12px 24px; font-size: 1rem; margin: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.8rem; }
+            .globe-container { height: 350px; }
+            .clock-card { padding: 25px; }
+            .clock-card .time { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 World Clock 3D</h1>
+            <p>Interactive 3D globe showing real-time clocks across the world</p>
+        </header>
+        
+        <div class="globe-container">
+            <div class="globe-info">
+                <p><strong>🌐 Interactive Globe</strong></p>
+                <p>• Drag to rotate</p>
+                <p>• Scroll to zoom</p>
+                <p>• Click cities to add</p>
+            </div>
+            <canvas id="globe-canvas"></canvas>
+            <div id="city-markers"></div>
+        </div>
+        
+        <div class="clock-grid" id="clockGrid">
+            <!-- Dynamic clock cards will be inserted here -->
+        </div>
+        
+        <div class="controls">
+            <button id="addTimezone" class="btn">+ Add Time Zone</button>
+            <button id="clearAll" class="btn btn-secondary">Clear All</button>
+        </div>
+    </div>
+    
+    <script>
+        class WorldClock3D {
+            constructor() {
+                this.activeTimezones = new Set();
+                this.updateInterval = null;
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.globe = null;
+                this.controls = null;
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.cityMarkers = [];
+                
+                this.cities = [
+                    { name: 'New York', timezone: 'America/New_York', lat: 40.7128, lon: -74.0060 },
+                    { name: 'Los Angeles', timezone: 'America/Los_Angeles', lat: 34.0522, lon: -118.2437 },
+                    { name: 'London', timezone: 'Europe/London', lat: 51.5074, lon: -0.1278 },
+                    { name: 'Paris', timezone: 'Europe/Paris', lat: 48.8566, lon: 2.3522 },
+                    { name: 'Tokyo', timezone: 'Asia/Tokyo', lat: 35.6762, lon: 139.6503 },
+                    { name: 'Shanghai', timezone: 'Asia/Shanghai', lat: 31.2304, lon: 121.4737 },
+                    { name: 'Mumbai', timezone: 'Asia/Kolkata', lat: 19.0760, lon: 72.8777 },
+                    { name: 'Sydney', timezone: 'Australia/Sydney', lat: -33.8688, lon: 151.2093 },
+                    { name: 'São Paulo', timezone: 'America/Sao_Paulo', lat: -23.5558, lon: -46.6396 },
+                    { name: 'Cairo', timezone: 'Africa/Cairo', lat: 30.0444, lon: 31.2357 },
+                    { name: 'Moscow', timezone: 'Europe/Moscow', lat: 55.7558, lon: 37.6176 },
+                    { name: 'Dubai', timezone: 'Asia/Dubai', lat: 25.2048, lon: 55.2708 },
+                    { name: 'Singapore', timezone: 'Asia/Singapore', lat: 1.3521, lon: 103.8198 },
+                    { name: 'Chicago', timezone: 'America/Chicago', lat: 41.8781, lon: -87.6298 },
+                    { name: 'Berlin', timezone: 'Europe/Berlin', lat: 52.5200, lon: 13.4050 }
+                ];
+                
+                this.availableTimezones = this.cities.map(city => ({
+                    name: city.name,
+                    timezone: city.timezone
+                }));
+                
+                this.init();
+            }
+            
+            init() {
+                this.initThreeJS();
+                this.setupEventListeners();
+                this.addDefaultTimezones();
+                this.startUpdating();
+                this.createCityMarkers();
+            }
+            
+            initThreeJS() {
+                const container = document.getElementById('globe-canvas');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                // Scene
+                this.scene = new THREE.Scene();
+                
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+                this.camera.position.z = 3;
+                
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ 
+                    canvas: container, 
+                    antialias: true,
+                    alpha: true 
+                });
+                this.renderer.setSize(width, height);
+                this.renderer.setClearColor(0x000000, 0);
+                
+                // Globe geometry and material
+                const geometry = new THREE.SphereGeometry(1, 64, 64);
+                
+                // Create Earth texture
+                const canvas = document.createElement('canvas');
+                canvas.width = 1024;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw a beautiful earth-like texture
+                const gradient = ctx.createLinearGradient(0, 0, 1024, 512);
+                gradient.addColorStop(0, '#1e3c72');
+                gradient.addColorStop(0.5, '#2a5298');
+                gradient.addColorStop(1, '#1e3c72');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 1024, 512);
+                
+                // Add continents
+                this.drawContinents(ctx);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                
+                const material = new THREE.MeshLambertMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                this.globe = new THREE.Mesh(geometry, material);
+                this.scene.add(this.globe);
+                
+                // Add wireframe
+                const wireframeGeometry = new THREE.SphereGeometry(1.001, 32, 32);
+                const wireframeMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x4a90e2,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.1
+                });
+                const wireframe = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+                this.scene.add(wireframe);
+                
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                this.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                this.scene.add(directionalLight);
+                
+                // Controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enableZoom = true;
+                this.controls.autoRotate = true;
+                this.controls.autoRotateSpeed = 0.5;
+                
+                // Start animation
+                this.animate();
+                
+                // Handle resize
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                // Handle click
+                container.addEventListener('click', (event) => this.onCanvasClick(event));
+            }
+            
+            drawContinents(ctx) {
+                ctx.fillStyle = '#4a7c59';
+                
+                // North America
+                ctx.beginPath();
+                ctx.moveTo(150, 150);
+                ctx.bezierCurveTo(200, 100, 300, 120, 350, 180);
+                ctx.bezierCurveTo(380, 220, 360, 260, 320, 280);
+                ctx.bezierCurveTo(250, 290, 180, 280, 150, 220);
+                ctx.closePath();
+                ctx.fill();
+                
+                // South America
+                ctx.beginPath();
+                ctx.moveTo(300, 320);
+                ctx.bezierCurveTo(330, 300, 360, 340, 370, 400);
+                ctx.bezierCurveTo(365, 460, 340, 480, 320, 470);
+                ctx.bezierCurveTo(290, 460, 280, 420, 290, 380);
+                ctx.bezierCurveTo(295, 350, 300, 320, 300, 320);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Europe
+                ctx.beginPath();
+                ctx.moveTo(480, 140);
+                ctx.bezierCurveTo(520, 130, 560, 150, 580, 180);
+                ctx.bezierCurveTo(575, 200, 550, 210, 520, 205);
+                ctx.bezierCurveTo(490, 200, 470, 180, 480, 140);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Africa
+                ctx.beginPath();
+                ctx.moveTo(500, 220);
+                ctx.bezierCurveTo(530, 210, 570, 240, 590, 300);
+                ctx.bezierCurveTo(595, 380, 580, 420, 560, 440);
+                ctx.bezierCurveTo(530, 450, 500, 440, 485, 400);
+                ctx.bezierCurveTo(480, 350, 490, 300, 500, 220);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Asia
+                ctx.beginPath();
+                ctx.moveTo(600, 120);
+                ctx.bezierCurveTo(700, 100, 800, 130, 850, 180);
+                ctx.bezierCurveTo(870, 220, 860, 260, 820, 280);
+                ctx.bezierCurveTo(750, 290, 650, 280, 600, 240);
+                ctx.bezierCurveTo(590, 200, 595, 160, 600, 120);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Australia
+                ctx.beginPath();
+                ctx.moveTo(750, 350);
+                ctx.bezierCurveTo(800, 340, 850, 360, 870, 390);
+                ctx.bezierCurveTo(875, 410, 860, 425, 840, 420);
+                ctx.bezierCurveTo(790, 415, 750, 405, 730, 380);
+                ctx.bezierCurveTo(735, 365, 750, 350, 750, 350);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            createCityMarkers() {
+                const markersContainer = document.getElementById('city-markers');
+                
+                this.cities.forEach(city => {
+                    const marker = document.createElement('div');
+                    marker.className = 'city-marker';
+                    marker.dataset.city = city.name;
+                    marker.dataset.timezone = city.timezone;
+                    marker.title = city.name;
+                    
+                    marker.addEventListener('click', () => {
+                        this.addTimezone(city.name, city.timezone);
+                        marker.classList.add('active');
+                    });
+                    
+                    markersContainer.appendChild(marker);
+                    this.updateMarkerPosition(marker, city);
+                });
+            }
+            
+            updateMarkerPosition(marker, city) {
+                const phi = (90 - city.lat) * (Math.PI / 180);
+                const theta = (city.lon + 180) * (Math.PI / 180);
+                
+                const x = -(Math.sin(phi) * Math.cos(theta));
+                const y = Math.cos(phi);
+                const z = Math.sin(phi) * Math.sin(theta);
+                
+                const vector = new THREE.Vector3(x, y, z);
+                vector.project(this.camera);
+                
+                const canvas = this.renderer.domElement;
+                const widthHalf = canvas.width / 2;
+                const heightHalf = canvas.height / 2;
+                
+                const screenX = (vector.x * widthHalf) + widthHalf;
+                const screenY = -(vector.y * heightHalf) + heightHalf;
+                
+                // Check if the marker is on the visible side of the globe
+                const isVisible = z > 0;
+                
+                marker.style.left = screenX + 'px';
+                marker.style.top = screenY + 'px';
+                marker.style.display = isVisible ? 'block' : 'none';
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                if (this.controls) {
+                    this.controls.update();
+                }
+                
+                // Update marker positions
+                this.cities.forEach(city => {
+                    const marker = document.querySelector(`[data-city="${city.name}"]`);
+                    if (marker) {
+                        this.updateMarkerPosition(marker, city);
+                    }
+                });
+                
+                if (this.renderer && this.scene && this.camera) {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+            
+            onWindowResize() {
+                const container = document.getElementById('globe-canvas');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+            
+            onCanvasClick(event) {
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObject(this.globe);
+                
+                if (intersects.length > 0) {
+                    // Add some interaction feedback
+                    const point = intersects[0].point;
+                    console.log('Globe clicked at:', point);
+                }
+            }
+            
+            setupEventListeners() {
+                document.getElementById('addTimezone').addEventListener('click', () => {
+                    this.showTimezoneSelector();
+                });
+                
+                document.getElementById('clearAll').addEventListener('click', () => {
+                    this.clearAllTimezones();
+                });
+            }
+            
+            addDefaultTimezones() {
+                this.addTimezone('New York', 'America/New_York');
+                this.addTimezone('London', 'Europe/London');
+                this.addTimezone('Tokyo', 'Asia/Tokyo');
+            }
+            
+            addTimezone(name, timezone) {
+                const timezoneKey = `${name}-${timezone}`;
+                if (this.activeTimezones.has(timezoneKey)) {
+                    return;
+                }
+                
+                this.activeTimezones.add(timezoneKey);
+                this.createClockCard(name, timezone);
+                
+                // Mark the city marker as active
+                const marker = document.querySelector(`[data-city="${name}"]`);
+                if (marker) {
+                    marker.classList.add('active');
+                }
+            }
+            
+            createClockCard(name, timezone) {
+                const clockGrid = document.getElementById('clockGrid');
+                const clockCard = document.createElement('div');
+                clockCard.className = 'clock-card';
+                clockCard.dataset.timezone = timezone;
+                clockCard.dataset.name = name;
+                
+                clockCard.innerHTML = `
+                    <button class="close-btn" onclick="worldClock.removeTimezone('${name}', '${timezone}')">&times;</button>
+                    <h3>${name}</h3>
+                    <div class="time" data-time></div>
+                    <div class="date" data-date></div>
+                    <div class="timezone">${timezone}</div>
+                `;
+                
+                clockGrid.appendChild(clockCard);
+                this.updateClockCard(clockCard, timezone);
+            }
+            
+            updateClockCard(clockCard, timezone) {
+                const now = new Date();
+                const timeElement = clockCard.querySelector('[data-time]');
+                const dateElement = clockCard.querySelector('[data-date]');
+                
+                if (timeElement && dateElement) {
+                    const timeFormatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: timezone,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    });
+                    
+                    const dateFormatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: timezone,
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    timeElement.textContent = timeFormatter.format(now);
+                    dateElement.textContent = dateFormatter.format(now);
+                }
+            }
+            
+            removeTimezone(name, timezone) {
+                const timezoneKey = `${name}-${timezone}`;
+                this.activeTimezones.delete(timezoneKey);
+                
+                const clockCard = document.querySelector(`[data-timezone="${timezone}"][data-name="${name}"]`);
+                if (clockCard) {
+                    clockCard.remove();
+                }
+                
+                const marker = document.querySelector(`[data-city="${name}"]`);
+                if (marker) {
+                    marker.classList.remove('active');
+                }
+            }
+            
+            clearAllTimezones() {
+                this.activeTimezones.clear();
+                document.getElementById('clockGrid').innerHTML = '';
+                document.querySelectorAll('.city-marker').forEach(marker => {
+                    marker.classList.remove('active');
+                });
+            }
+            
+            showTimezoneSelector() {
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+                
+                const selector = document.createElement('div');
+                selector.className = 'timezone-selector';
+                
+                selector.innerHTML = `
+                    <h3>🌍 Add Time Zone</h3>
+                    <select id="timezoneSelect">
+                        <option value="">Select a timezone...</option>
+                        ${this.availableTimezones.map(tz => 
+                            `<option value="${tz.timezone}">${tz.name} (${tz.timezone})</option>`
+                        ).join('')}
+                    </select>
+                    <div class="btn-group">
+                        <button class="btn" onclick="worldClock.addSelectedTimezone()">Add</button>
+                        <button class="btn btn-secondary" onclick="worldClock.closeTimezoneSelector()">Cancel</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(overlay);
+                document.body.appendChild(selector);
+                
+                overlay.addEventListener('click', () => {
+                    this.closeTimezoneSelector();
+                });
+            }
+            
+            addSelectedTimezone() {
+                const select = document.getElementById('timezoneSelect');
+                const selectedValue = select.value;
+                
+                if (selectedValue) {
+                    const selectedOption = this.availableTimezones.find(tz => tz.timezone === selectedValue);
+                    if (selectedOption) {
+                        this.addTimezone(selectedOption.name, selectedOption.timezone);
+                    }
+                }
+                
+                this.closeTimezoneSelector();
+            }
+            
+            closeTimezoneSelector() {
+                const overlay = document.querySelector('.overlay');
+                const selector = document.querySelector('.timezone-selector');
+                
+                if (overlay) overlay.remove();
+                if (selector) selector.remove();
+            }
+            
+            updateAllClocks() {
+                document.querySelectorAll('.clock-card').forEach(clockCard => {
+                    const timezone = clockCard.dataset.timezone;
+                    if (timezone) {
+                        this.updateClockCard(clockCard, timezone);
+                    }
+                });
+            }
+            
+            startUpdating() {
+                this.updateAllClocks();
+                this.updateInterval = setInterval(() => {
+                    this.updateAllClocks();
+                }, 1000);
+            }
+        }
+
+        // Initialize the world clock when the page loads
+        let worldClock;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            worldClock = new WorldClock3D();
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                worldClock.closeTimezoneSelector();
+            } else if (e.key === 'a' && e.ctrlKey) {
+                e.preventDefault();
+                worldClock.showTimezoneSelector();
+            } else if (e.key === 'c' && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                worldClock.clearAllTimezones();
+            }
+        });
+    </script>
+</body>
+</html>

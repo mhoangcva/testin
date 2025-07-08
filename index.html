@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Clock</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Inline fallback styles in case CSS doesn't load */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10000;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingMessage" class="loading">🌍 Loading World Clock...</div>
+    <div id="debugInfo" class="debug-info" style="display: none;">
+        <div>JavaScript Status: <span id="jsStatus">Loading...</span></div>
+        <div>Files loaded from: <span id="protocol"></span></div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>🌍 World Clock</h1>
+            <p>Real-time clock showing time across the globe</p>
+        </header>
+        
+        <div class="world-map-container">
+            <svg viewBox="0 0 1000 500" class="world-map">
+                <!-- World map background -->
+                <rect width="1000" height="500" fill="#2c5f84" class="ocean"/>
+                
+                <!-- Simplified but recognizable continents -->
+                <!-- North America -->
+                <path d="M 80 80 Q 120 60 180 80 L 220 100 Q 250 120 280 140 L 300 160 Q 290 200 270 220 L 250 240 Q 220 250 180 240 L 140 230 Q 100 210 80 180 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="175" cy="160" r="25" class="region clickable-region" data-timezone="America/New_York" data-region="New York" fill="#6b9975"></circle>
+                <circle cx="120" cy="140" r="20" class="region clickable-region" data-timezone="America/Los_Angeles" data-region="Los Angeles" fill="#6b9975"></circle>
+                
+                <!-- South America -->
+                <path d="M 250 280 Q 280 270 300 290 L 320 320 Q 330 380 320 420 L 310 450 Q 290 460 270 450 L 250 440 Q 240 400 250 360 L 260 320 Q 250 300 250 280 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="285" cy="380" r="18" class="region clickable-region" data-timezone="America/Sao_Paulo" data-region="São Paulo" fill="#6b9975"></circle>
+                
+                <!-- Europe -->
+                <path d="M 460 100 Q 500 90 540 110 L 560 130 Q 570 150 560 170 L 540 180 Q 500 185 460 180 L 440 170 Q 430 150 440 130 L 450 110 Q 460 100 460 100 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="500" cy="140" r="15" class="region clickable-region" data-timezone="Europe/London" data-region="London" fill="#6b9975"></circle>
+                <circle cx="520" cy="150" r="15" class="region clickable-region" data-timezone="Europe/Paris" data-region="Paris" fill="#6b9975"></circle>
+                
+                <!-- Africa -->
+                <path d="M 480 200 Q 520 190 550 210 L 570 240 Q 580 300 570 360 L 560 400 Q 540 420 520 410 L 500 400 Q 480 380 480 340 L 485 300 Q 480 260 480 220 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="525" cy="240" r="15" class="region clickable-region" data-timezone="Africa/Cairo" data-region="Cairo" fill="#6b9975"></circle>
+                
+                <!-- Asia -->
+                <path d="M 580 80 Q 650 70 720 90 L 780 110 Q 850 130 900 150 L 920 180 Q 910 220 880 240 L 820 250 Q 760 255 700 250 L 650 240 Q 600 220 580 200 L 570 180 Q 575 140 580 120 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="650" cy="180" r="18" class="region clickable-region" data-timezone="Asia/Mumbai" data-region="Mumbai" fill="#6b9975"></circle>
+                <circle cx="720" cy="170" r="18" class="region clickable-region" data-timezone="Asia/Shanghai" data-region="Shanghai" fill="#6b9975"></circle>
+                <circle cx="800" cy="160" r="18" class="region clickable-region" data-timezone="Asia/Tokyo" data-region="Tokyo" fill="#6b9975"></circle>
+                
+                <!-- Australia -->
+                <path d="M 750 320 Q 800 310 850 330 L 880 350 Q 885 370 880 390 L 860 400 Q 820 405 780 400 L 750 390 Q 740 370 745 350 Z" 
+                      class="continent" fill="#4a7c59"></path>
+                <circle cx="810" cy="360" r="18" class="region clickable-region" data-timezone="Australia/Sydney" data-region="Sydney" fill="#6b9975"></circle>
+                
+                <!-- Region labels -->
+                <text x="175" y="200" text-anchor="middle" class="region-label">North America</text>
+                <text x="285" y="420" text-anchor="middle" class="region-label">South America</text>
+                <text x="500" y="200" text-anchor="middle" class="region-label">Europe</text>
+                <text x="525" y="430" text-anchor="middle" class="region-label">Africa</text>
+                <text x="720" y="200" text-anchor="middle" class="region-label">Asia</text>
+                <text x="810" y="400" text-anchor="middle" class="region-label">Australia</text>
+            </svg>
+            
+            <!-- Time zone clocks will be positioned over the map -->
+            <div class="timezone-clocks" id="timezoneClocks"></div>
+        </div>
+        
+        <div class="clock-grid" id="clockGrid">
+            <!-- Dynamic clock cards will be inserted here -->
+        </div>
+        
+        <div class="controls">
+            <button id="addTimezone" class="btn">+ Add Time Zone</button>
+            <button id="clearAll" class="btn btn-secondary">Clear All</button>
+        </div>
+    </div>
+    
+    <script>
+        // Debug information
+        document.getElementById('protocol').textContent = window.location.protocol;
+        if (window.location.protocol === 'file:') {
+            document.getElementById('debugInfo').style.display = 'block';
+            document.getElementById('jsStatus').textContent = 'Running from file:// - may have issues';
+        }
+        
+        // Hide loading message once DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('jsStatus').textContent = 'DOM Ready';
+        });
+        
+        // Error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.message, 'at', e.filename, ':', e.lineno);
+            document.getElementById('jsStatus').textContent = 'JavaScript Error - check console';
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
