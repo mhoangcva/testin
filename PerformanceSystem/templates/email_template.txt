@@ -1,0 +1,23 @@
+Hi {Name},
+
+I hope this message finds you well. Here's a quick update on your portfolio performance:
+
+📊 **Portfolio Performance Summary:**
+• YTD return: {YTD}
+• Cumulative since inception: {SinceInception}
+• Current Sharpe Ratio: {Sharpe}
+
+🎯 **Our Highest Conviction Views Driving This Strategy:**
+{Convictions}
+
+📈 **Key Insights:**
+Your portfolio continues to benefit from our strategic positioning across our core conviction themes. The performance metrics above reflect our disciplined approach to risk management while capitalizing on market opportunities.
+
+I've attached your full performance report with detailed breakdowns of holdings, allocations, and risk metrics. Please review at your convenience, and let me know if you'd like to schedule a call to walk through these numbers in more detail.
+
+As always, I'm here to answer any questions you might have about your investment strategy or market outlook.
+
+Best regards,
+[Your Name]
+[Your Title]
+[Contact Information]

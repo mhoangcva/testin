@@ -1,0 +1,31 @@
+import pandas as pd
+import os
+
+# Sample conviction data - replace with your actual data
+conviction_data = {
+    'Model': [
+        'US Large Cap Growth',
+        'International Developed Markets',
+        'Technology Sector Focus',
+        'Fixed Income Core',
+        'Emerging Markets',
+        'Real Estate Investment Trusts',
+        'Small Cap Value',
+        'Commodities & Energy'
+    ],
+    'YTD%': [12.5, 8.3, 15.2, 4.1, -2.1, 9.7, 6.8, 11.3],
+    'Commentary': [
+        'Strong performance driven by AI and cloud infrastructure investments',
+        'Benefiting from currency stabilization and economic recovery',
+        'Leading innovation companies showing robust earnings growth',
+        'Stable returns in volatile market environment',
+        'Temporary headwinds from geopolitical concerns',
+        'Solid dividend yields with capital appreciation potential',
+        'Attractive valuations in quality small-cap names',
+        'Energy transition and commodity supercycle themes'
+    ]
+}
+
+df = pd.DataFrame(conviction_data)
+# This will be created properly by the main script
+print("Sample conviction data structure created")
